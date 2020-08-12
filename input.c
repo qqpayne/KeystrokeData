@@ -16,8 +16,11 @@ void INThandler(){
 }
 
 int main(){
-    FILE *fptr = fopen("keyhistory.csv", "a");
-    int device = open("/dev/input/event3", O_RDONLY);
+    char keyboard[] = "/dev/input/event3";
+    char logFile[] = "/home/payne/workfolder/input/keyhistory.csv";
+    
+    FILE *log = fopen(logFile, "a");
+    int device = open(keyboard, O_RDONLY);
     struct input_event ev;
     
     signal(SIGINT, INThandler);
@@ -39,8 +42,8 @@ int main(){
         read(device, &ev, sizeof(ev));
 
         if(ev.type == 1 && ev.value == 1){ // принимаем только keypress 
-            fprintf(fptr, "%d,%s\n", ev.time.tv_sec, newKeys[ev.code]);
-            fflush(fptr); // сразу же записываем нажатие в цсв
+            fprintf(log, "%d,%s\n", ev.time.tv_sec, newKeys[ev.code]);
+            fflush(log); // сразу же записываем нажатие в лог
         }
     }
 }
